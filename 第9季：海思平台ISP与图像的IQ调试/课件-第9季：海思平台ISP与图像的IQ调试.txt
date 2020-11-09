@@ -1,0 +1,210 @@
+*******		   《项目驱动创新学习训练营》			  *******
+*******  A0201-海思HI3518E方案视频编解码传输深度学习  *******
+*******       第9季：海思平台ISP与图像的IQ调试	  	  *******
+
+--------------------------------------------------------
+本课程由朱老师物联网大讲堂推出并提供技术支持，更多技术问
+题可以联系朱有鹏老师获取支持。版权所有，翻录必究
+--------------------------------------------------------
+第一部分、章节目录
+9.1.何为ISP何为IQ调试
+9.2.海思MPP中ISP的实现框架1
+9.3.海思MPP中ISP的实现框架2
+9.4.海思MPP中ISP的实现框架3
+9.5.海思MPP中ISP的实现框架4
+9.6.IQ调试相关的概念1
+9.7.IQ调试相关的概念2
+9.8.IQ调试相关的概念3
+9.9.PQTool工具的安装和使用
+9.10.模拟图像参数调整试验
+
+
+第二部分、章节介绍
+9.1.何为ISP何为IQ调试
+	本节重点深度讲解ISP和IQ这2个概念以及他们的关联。
+9.2.海思MPP中ISP的实现框架1
+	本节讲解海思ISP的软件设计架构，firmware和3a、sensor驱动等的调用及注册关系。
+9.3.海思MPP中ISP的实现框架2
+	本节接上节继续讲解海思ISP的软件设计架构，firmware和3a、sensor驱动等的调用及注册关系。
+9.4.海思MPP中ISP的实现框架3
+	本节分析sample代码的执行过程，重点是其中的isp处理部分。
+9.5.海思MPP中ISP的实现框架4
+	本节分析sensor库内部以及isp fireware内部实现细节，重点是如何映射到底层硬件实现代码部分。
+9.6.IQ调试相关的概念1
+	本节重点讲解了黑电平、镜头阴影矫正LSC及坏点校正DPC三个重要概念。
+9.7.IQ调试相关的概念2
+	本节重点讲解了自动曝光AE、DRC与WDR、噪声抑制NR及颜色插值Demosaic等概念。
+9.8.IQ调试相关的概念3
+	本节重点讲解了自动白平衡AWB、颜色矫正CCM、gamma矫正、自动增益控制等IQ调试相关的剩余概念。
+9.9.PQTool工具的安装和使用
+	本节讲解并且实战演示PQTool工具的环境搭建及基本使用方法。
+9.10.模拟图像参数调整试验
+	本节以gamma矫正参数的调试为例，演示了如何使用PQTool调试参数，并且将新参数应用到应用中生效的整个流程。
+	
+
+第三部分、随堂记录
+9.1.何为ISP何为IQ调试
+9.1.1、ISP概念剖析
+(1)ISP: image signal process，图像信号处理
+		image signal processor 图像信号处理器
+(2)思考：什么是图像信号？
+(3)为什么需要处理？器件或环境不理想导致图像不理想，譬如过曝光、不通透、坏点
+(4)如何处理？使用针对性算法对原始图像数据做运算处理
+(5)ISP的本质：用采集后的数字图像的运算处理修补前端的不理想，尽量提升图像质量
+(6)ISP处理器：核心是数字运算能力
+9.1.2、在哪里做ISP
+(1)镜头->sensor->ISP->VIU->......
+(2)ISP单元可以在sensor中，独立，或集成到AP SoC中，现在大多在AP中
+(3)HI3518E中内置ISP单元
+9.1.3、何为IQ
+(1)image quality，图像质量
+(2)浅层次的图像质量问题：坏点、畸变、条纹、局部不清晰等
+(3)高层次的图像质量问题：通透性、锐度、色彩饱满度、色彩还原度等
+9.1.4、ISP和IQ总结
+(1)IQ是目的，ISP是手段，调试是方法
+(2)掌握ISP和IQ调试的关键：相关概念、海思MPP中ISP的实现、PQTool工具、专业培训
+
+9.2.海思MPP中ISP的实现框架1
+9.2.1、官方文档
+(1)《HiISP开发参考》 与 《ISP_3A开发指南》
+(2)重点是ISP的框架架构和软件流程
+9.2.2、sample中ISP相关部分再次解读
+(1)核心代码在SAMPLE_COMM_ISP_Init函数中
+(2)注意对照文档中的架构来理解代码
+
+9.3.海思MPP中ISP的实现框架2
+
+9.4.海思MPP中ISP的实现框架3
+main
+	SAMPLE_VENC_720P_CLASSIC
+		SAMPLE_COMM_VI_StartVi
+			SAMPLE_COMM_VI_StartIspAndVi
+				SAMPLE_COMM_ISP_Init
+					sensor_register_callback
+						cmos_init_sensor_exp_function
+						HI_MPI_ISP_SensorRegCallBack
+						cmos_init_ae_exp_function
+						HI_MPI_AE_SensorRegCallBack
+						cmos_init_awb_exp_function
+						HI_MPI_AWB_SensorRegCallBack
+					HI_MPI_AE_Register
+					HI_MPI_AWB_Register
+					HI_MPI_AF_Register
+					HI_MPI_ISP_MemInit
+					HI_MPI_ISP_SetWDRMode
+					HI_MPI_ISP_SetPubAttr
+					HI_MPI_ISP_Init
+				SAMPLE_COMM_ISP_Run
+					Test_ISP_Run
+						HI_MPI_ISP_Run
+
+9.5.海思MPP中ISP的实现框架4
+9.5.1、sensor注册内部细节
+9.5.2、ISP注册内部细节
+
+9.6.IQ调试相关的概念1
+9.6.1、黑电平
+(1)暗电流
+物理器件不可能是理想的， 由于杂质、 受热等其他原因的影响， 即使没有光照射到象素，象素单元也会产生电荷， 这些电荷产生了暗电流。 而且， 暗电流与光照产生的电荷很难进行区分。
+(2)Black Level 
+用来定义图像数据为0时对应的信号电平。
+9.6.2、镜头阴影矫正
+(1)LSC, Lens Shading Correction，镜头阴影矫正
+(2)镜头物理原因和入射光夹角原因，导致一帧内中心点像素的亮度值到边缘处逐渐减弱
+(3)镜头阴影是摄像头系统本身引入的问题，所以需要ISP算法进行矫正
+(4)矫正说明，参考：https://blog.csdn.net/xiaoyouck/article/details/77206505
+9.6.3、坏点矫正
+(1)DPC, defect pixel correction（有时也写为：bad point correction，BPC）
+https://blog.csdn.net/xiaoyouck/article/details/73134846
+
+
+9.7.IQ调试相关的概念2
+9.7.1、自动曝光
+(1)AE, auto exposure
+(2)曝光时间：sensor 积累电荷的时间，是 sensor pixel 从开始曝光到电量被读出的这
+段时间。
+(3)曝光增益：对 sensor 的输出电荷的总的放大系数，一般有数字增益（dgain）和模拟增益（again），模拟增益引入的噪声会稍小，所以一般优先用模拟增益。
+9.7.2、DRC与WDR
+(1)DRC：Dynamic Range Compression
+即动态范围压缩，目的是调整图像的动态范围，使得图像显示出更多的信息。 DRC 模块是一个基于人眼视觉系统特性的高级局部色阶映射（多空间动态范围压缩）引擎。
+开启后,会提升暗处细节,同时也提升噪声，导致噪声强度相比DRC关闭时更大些,此时边缘增强,去噪功能都应该与DRC有关
+BLC：backlight compensation，背景光补偿
+(2)WDR和DRC区别：
+DRC开启后主要是提升暗处细节同时也提升噪声，所以在暗光下要考虑如何去掉噪点；而WDR是局部亮局部暗的情况下都能完美曝光显示
+(3)WDR和BLC的效果对比，参考：
+https://blog.csdn.net/tr_ainiyangyang/article/details/82388559
+https://blog.csdn.net/a200800170331/article/details/79272174
+9.7.3、噪声抑制
+(1)noise reduction/denoise
+9.7.4、颜色插值
+(1)Demosaic, 去马赛克
+(2)参考：https://blog.csdn.net/helimin12345/article/details/81674590
+
+9.8.IQ调试相关的概念3
+9.8.1、自动白平衡
+(1)WB：white balance，白平衡
+(2)AWB：automatic white balance，自动白平衡
+9.8.2、颜色矫正
+(1)color correction
+(2)CCM, color correction matrix
+(3)sensor 对光谱的响应，在RGB 各分量上与人眼对光谱的响应通常是有偏差的，需要通过一个色彩校正矩阵CCM（Color Correction Matrix）校正光谱响应的交叉效应和响应强度，使前端捕获的图片与人眼视觉在色彩上保持一致。实际上矫正过程就是个矩阵运算过程。
+(4)颜色矫正能提升图像饱和度，饱和度也称色彩的纯度。取决于该色中含色成分和消色成分(灰色)的比例。含色成分越大，饱和度越大；消色成分越大，饱和度越小。
+9.8.3、伽马矫正
+(1)gamma correction
+(2)参考：https://blog.csdn.net/chenjuan0530/article/details/78970791
+9.8.4、自动增益控制
+(1)AGC：automatic gain control，自动增益控制
+(2)使用算法自动调节增益系数，使输入值变化很大时输出值基本保持线性不变
+9.8.5、颜色空间转换
+(1)CSC（Color Space Conversion）颜色空间转换，一般是将sRGB空间转换到YUV。
+(2)LUT（Look-Up Table）查找表技术，可以在两组数据之间建立对应关系。可以用于颜色空间转换、CCM等
+9.8.6、色度矫正
+(1)CA (Chroma Adjustment)
+色度调整，在亮度不变的情况下，调整色度。如YUV，对UV进行处理。
+(2)CAC (Chromatic Aberration Correction)
+由于不同颜色的光在通过镜头时以不同的速度传播，镜头对于所有波长的光不能聚集于一点而引起的“紫边”现象。
+9.8.7、图像锐化
+(1)Sharpen
+(2)图像锐化的实质：锐化后图像=原图像+加重的边缘
+9.8.8、感知色
+PCR (Preferred Color Reproduction)
+大部分情况图像是给人看的，不同的人有不同的颜色喜好，根据用户爱好改变色调空间，称为喜好色。另一种称为感知色。
+9.8.9、图像增强
+IE(Image Enhancement)
+增强图像中的有用信息，它可以是一个失真的过程，其目的是要改善图像的视觉效果，针对给定图像的应用场合。图像增强涉及许多操作，如降噪，边缘增强，对比度增强。因此，图像增强可以不顾增强后的图像是否失真，只要看着舒服就行。
+
+9.9.PQTool工具的安装和使用
+9.9.1、PQTool的2部分介绍
+9.9.2、准备工作
+(1)确认编译过的SDK，编译运行测试好的sample
+(2)串口终端和telnet双登录以便两边同时运行程序
+(3)Windows IP设置好，防火墙关闭
+9.9.3、PQTool使用
+(1)读取寄存器值
+(2)实时更改gamma看效果
+(3)实时更改sharpen看效果
+9.9.4、分析gamma和sharpen的源码
+(1)gamma
+(2)sharpen
+
+9.10.模拟图像参数调整试验
+9.10.1、gamma参数试验
+(1)PQTool工具读取gamma参数，存成txt，和源码中写死的值对比
+(2)PQTool中更改gamma参数，保存效果截图，保存新参数txt
+(3)将参数txt更改格式后备用
+(4)在isp源码中更改新参数，并且重新编译真个isp
+(5)重新部署新生成的ko文件到开发板，重启开发板
+(6)重新编译sample，在开发板中运行看效果，和之前的截图对比
+
+
+
+
+
+
+
+
+
+
+
+
+
